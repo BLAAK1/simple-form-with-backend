@@ -3,11 +3,80 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>IIS Location</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
+    <div class="iis-info">
+      <div id="map" style="height: 460px"></div>
+      <div class="info">
+        <table>
+          <tbody>
+            <tr>
+              <td>Wysokość</td>
+              <td id="altitude">Altitute</td>
+            </tr>
+            <tr>
+              <td>Prędkość</td>
+              <td id="velocity">velocity</td>
+            </tr>
+            <tr>
+              <td>Szerokość geograficzna</td>
+              <td id="latitude">latitude</td>
+            </tr>
+            <tr>
+              <td>Długość geograficzna</td>
+              <td id="longitude">longitude</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
     <script>
-      //Data from: https://data.giss.nasa.gov/gistemp/
+      const alt = document.getElementById("altitude");
+      const velo = document.getElementById("velocity");
+      const lati = document.getElementById("latitude");
+      const long = document.getElementById("longitude");
+
+      const myMap = L.map("map").setView([0, 0], 2);
+      const tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 });
+      tiles.addTo(myMap);
+
+      const circle = L.circle([0, 0], {
+        color: "white",
+        fillColor: "#474747",
+        fillOpacity: 0.5,
+        radius: 1500000,
+      }).addTo(myMap);
+
+      let firstTime = true;
+
+      async function getData() {
+        const apiUrl = "https://api.wheretheiss.at/v1/satellites/25544";
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        const lat = data.latitude.toFixed(2);
+        const lon = data.longitude.toFixed(2);
+        const vel = data.velocity.toFixed(2) + "km/h";
+        const alti = data.altitude.toFixed(2) + "km";
+
+        circle.setLatLng([lat, lon]);
+        if (firstTime) {
+          myMap.setView([lat, lon], 2);
+          firstTime = false;
+        }
+        alt.innerHTML = alti;
+        velo.innerHTML = vel;
+        lati.innerHTML = lat;
+        long.innerHTML = lon;
+      }
+
+      getData();
+      setInterval(getData, 1000);
     </script>
   </body>
 </html>
